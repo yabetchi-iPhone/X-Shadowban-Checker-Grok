@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-bg: #07080a;
+  --color-surface: #101218;
+  --color-elevated: #171a21;
+  --color-fg: #f1f2f4;
+  --color-muted: #8b909a;
+  --color-subtle: #5c616b;
+  --color-border: #23262e;
+  --color-primary: #1d9bf0;
+  --color-primary-fg: #041018;
+  --color-ok: #00ba7c;
+  --color-warn: #ffad1f;
+  --color-ban: #f4212e;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04), 0 18px 40px rgb(0 0 0 / 0.35);
+}
+
+html.light {
+  --color-bg: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-elevated: #eef0f3;
+  --color-fg: #111318;
+  --color-muted: #5f6570;
+  --color-subtle: #8a9099;
+  --color-border: #d9dde3;
+  --color-primary: #1a8cd8;
+  --color-primary-fg: #ffffff;
+  --color-ok: #00875a;
+  --color-warn: #c47d00;
+  --color-ban: #d61f2b;
+  --shadow-card: 0 1px 0 rgb(16 18 24 / 0.04), 0 16px 32px rgb(16 18 24 / 0.06);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-primary) 70%, transparent);
+    color: var(--color-primary-fg);
+  }
+}
+
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    animation: none;
+  }
+}
