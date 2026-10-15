@@ -18,12 +18,12 @@ import {
   saveCheckHistory,
 } from "@/lib/server-fns";
 import type { CheckResult, HistoryItem } from "@/lib/types";
+import { applySearchVerdict } from "@/lib/score";
 
 const STEPS = [
-  "1/4 プロフィール公開状態を確認しています…",
-  "2/4 検索BANのサインを照合しています…",
-  "3/4 ゴーストBAN / スレッド除外を見ています…",
-  "4/4 リプライ降格の兆候を集計しています…",
+  "1/3 公開プロフィールを取得しています…",
+  "2/3 フォロワーとポスト数を照合しています…",
+  "3/3 検索BANは別アカウントの最新タブで確定します…",
 ];
 
 const HISTORY_KEY = "x_shadowban_history";
@@ -126,6 +126,14 @@ function CheckerInner() {
     }
   };
 
+  const handleSearchVerdict = (banned: boolean) => {
+    if (!result) return;
+    const next = applySearchVerdict(result, banned);
+    setResult(next);
+    remember(toHistoryItem(next));
+    toast.success(banned ? "検索BANとして記録しました" : "検索OKとして記録しました");
+  };
+
   const clearHistory = () => {
     setHistory([]);
     localStorage.removeItem(HISTORY_KEY);
@@ -152,7 +160,7 @@ function CheckerInner() {
             そのポスト、届いてますか？
           </h1>
           <p className="mx-auto max-w-xl text-sm text-muted">
-            ユーザー名を入れると、プロフィール公開・検索BAN・補完BAN・ゴーストBAN・リプライ降格を診断します。
+            プロフィールは実測、診断は Grok 4.7。検索BANは別アカウントの最新タブで確定します。
           </p>
         </div>
 
@@ -175,7 +183,7 @@ function CheckerInner() {
         {result ? (
           <div id="results" className="mt-8 space-y-6 animate-fade-up">
             <ProfileCard result={result} />
-            <BanStatusCards result={result} />
+            <BanStatusCards result={result} onSearchVerdict={handleSearchVerdict} />
             <GrokDiagnosis key={result.checkedAt} result={result} />
           </div>
         ) : null}

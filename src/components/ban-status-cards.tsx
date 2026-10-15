@@ -10,6 +10,7 @@ import {
 import { BAN_TYPE_GUIDES } from "@/lib/shadowban-knowledge";
 import type { CheckItem, CheckResult } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
 function StatusBadge({ status }: { status: CheckItem["status"] }) {
@@ -48,10 +49,16 @@ function StatusBadge({ status }: { status: CheckItem["status"] }) {
 function methodLabel(method: CheckItem["method"]) {
   if (method === "observed") return "実測";
   if (method === "fixture") return "デモ";
-  return "推定";
+  return "未測定";
 }
 
-export function BanStatusCards({ result }: { result: CheckResult }) {
+export function BanStatusCards({
+  result,
+  onSearchVerdict,
+}: {
+  result: CheckResult;
+  onSearchVerdict?: (banned: boolean) => void;
+}) {
   const [open, setOpen] = useState<string | null>(null);
 
   const items = [
@@ -96,18 +103,21 @@ export function BanStatusCards({ result }: { result: CheckResult }) {
     <section className="mx-auto w-full max-w-3xl px-4">
       <div className="mb-3 flex items-end justify-between gap-3">
         <h3 className="text-base font-semibold">項目別診断</h3>
-        <p className="text-xs text-subtle">実測と推定を分けて表示</p>
+        <p className="text-xs text-subtle">実測と未測定を分けて表示</p>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {items.map((item) => {
           const expanded = open === item.key;
           const problem = item.check.status !== "ok" && item.check.status !== "unknown";
+          const needsSearch =
+            item.key === "searchBan" && item.check.status === "unknown" && onSearchVerdict;
           return (
             <article
               key={item.key}
               className={cn(
                 "rounded-xl border bg-surface p-4",
                 problem ? "border-ban/40" : "border-border",
+                needsSearch && "border-warn/40",
               )}
             >
               <div className="mb-3 flex items-start justify-between gap-2">
@@ -118,6 +128,29 @@ export function BanStatusCards({ result }: { result: CheckResult }) {
                 <StatusBadge status={item.check.status} />
               </div>
               <p className="mb-3 text-xs leading-relaxed text-muted">{item.check.description}</p>
+              {needsSearch ? (
+                <div className="mb-3 space-y-2 rounded-lg border border-warn/25 bg-warn/10 p-3">
+                  <p className="text-xs leading-relaxed text-fg">
+                    別アカウントで最新タブ{" "}
+                    <span className="font-mono">from:{result.username}</span>{" "}
+                    を見て、結果を選んでください。
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Button type="button" size="sm" className="h-11" onClick={() => onSearchVerdict(true)}>
+                      結果なし → 検索BAN
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-11"
+                      onClick={() => onSearchVerdict(false)}
+                    >
+                      ポストが出た
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
               <div className="flex items-center justify-between border-t border-border pt-3">
                 <a
                   href={item.testUrl}

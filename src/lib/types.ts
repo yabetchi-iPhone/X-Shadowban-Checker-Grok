@@ -13,7 +13,8 @@ export type OverallStatus =
   | "WARNING"
   | "BAN_DETECTED"
   | "SUSPENDED"
-  | "NOT_FOUND";
+  | "NOT_FOUND"
+  | "NEEDS_REVIEW";
 
 export interface ProfileSignal {
   id: string;

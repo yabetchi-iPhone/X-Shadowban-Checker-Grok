@@ -58,6 +58,13 @@ function statusBadge(status: OverallStatus) {
           BAN DETECTED
         </Badge>
       );
+    case "NEEDS_REVIEW":
+      return (
+        <Badge tone="warn">
+          <AlertTriangle className="size-3.5" />
+          要確認
+        </Badge>
+      );
     case "SUSPENDED":
       return (
         <Badge tone="neutral">

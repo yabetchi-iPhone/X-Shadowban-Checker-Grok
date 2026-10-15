@@ -26,7 +26,7 @@ export function Header({
             <span className="block truncate text-sm font-semibold tracking-tight sm:text-base">
               X Shadowban Checker
             </span>
-            <span className="hidden text-xs text-muted sm:block">Grok による可視化診断</span>
+            <span className="hidden text-xs text-muted sm:block">Grok 4.7 による可視化診断</span>
           </span>
         </Link>
 

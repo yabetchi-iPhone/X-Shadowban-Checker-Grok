@@ -82,6 +82,7 @@ export const diagnoseAccount = createServerFn({ method: "POST" })
 【補完BAN】${r.checks.searchSuggestionBan.status} (${r.checks.searchSuggestionBan.method})
 【ゴーストBAN】${r.checks.ghostBan.status} (${r.checks.ghostBan.method})
 【リプライ降格】${r.checks.replyDeboosting.status} (${r.checks.replyDeboosting.method})
+※ status が unknown の項目は未測定です。ok と書かないでください。from:検索が空なら検索BANです。自分のログイン画面の検索は信用しないでください。
 【シグナル】${r.signals.map((s) => `${s.label}: ${s.detail}`).join(" / ") || "なし"}
 ${data.userContext ? `【ユーザー補足】${data.userContext}` : ""}
 
@@ -102,7 +103,7 @@ JSONのみで回答:
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "grok-4.5",
+        model: "grok-4.7",
         temperature: 0.4,
         max_tokens: 900,
         response_format: { type: "json_object" },

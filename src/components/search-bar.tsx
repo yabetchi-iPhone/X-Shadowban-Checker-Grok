@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { HistoryItem } from "@/lib/types";
 
-const SAMPLE_HANDLES = ["grok", "elonmusk", "yabetchi_iPhone"];
+const SAMPLE_HANDLES = ["XDevelopers", "elonmusk", "yabetchi_iPhone"];
 const TEST_HANDLES = ["test_ban", "test_deboost", "test_ghost"];
 
 export function SearchBar({

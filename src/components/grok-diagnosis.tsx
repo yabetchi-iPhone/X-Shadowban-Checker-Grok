@@ -58,7 +58,7 @@ export function GrokDiagnosis({ result }: { result: CheckResult }) {
             <div>
               <h3 className="flex items-center gap-2 text-base font-semibold">
                 Grok 詳細診断
-                <Badge tone="primary">grok-4.5</Badge>
+                <Badge tone="primary">grok-4.7</Badge>
               </h3>
               <p className="text-xs text-muted">原因仮説と、回復までの手順を日本語で組み立てます</p>
             </div>

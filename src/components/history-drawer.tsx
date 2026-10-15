@@ -7,6 +7,7 @@ function pill(status: OverallStatus) {
   if (status === "ALL_CLEAR") return <Badge tone="ok">ALL CLEAR</Badge>;
   if (status === "WARNING") return <Badge tone="warn">WARNING</Badge>;
   if (status === "BAN_DETECTED") return <Badge tone="ban">BAN</Badge>;
+  if (status === "NEEDS_REVIEW") return <Badge tone="warn">要確認</Badge>;
   return <Badge tone="neutral">{status}</Badge>;
 }
 

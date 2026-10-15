@@ -1,9 +1,10 @@
 import type {
   CheckItem,
+  CheckItemStatus,
   CheckResult,
-  OverallStatus,
   ProfileSignal,
 } from "./types";
+import { summarizeChecks } from "./score";
 
 const FX_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
@@ -99,30 +100,14 @@ function fixtureResult(handle: string): CheckResult | null {
   });
 }
 
-function scoreAndStatus(opts: {
-  exists: boolean;
-  isSuspended: boolean;
-  searchBan: boolean;
-  suggestionBan: boolean;
-  ghostBan: boolean;
-  deboost: boolean;
-}): { score: number; status: OverallStatus } {
-  if (!opts.exists && !opts.isSuspended) {
-    return { score: 0, status: "NOT_FOUND" };
-  }
-  if (opts.isSuspended) return { score: 0, status: "SUSPENDED" };
-
-  let score = 100;
-  if (opts.searchBan) score -= 40;
-  if (opts.ghostBan) score -= 35;
-  if (opts.suggestionBan) score -= 15;
-  if (opts.deboost) score -= 10;
-
-  let status: OverallStatus = "ALL_CLEAR";
-  if (opts.searchBan || opts.ghostBan) status = "BAN_DETECTED";
-  else if (opts.suggestionBan || opts.deboost) status = "WARNING";
-
-  return { score: Math.max(0, score), status };
+function flagStatus(
+  flag: boolean | null,
+  exists: boolean,
+  suspended: boolean,
+): CheckItemStatus {
+  if (flag === true) return "ban";
+  if (flag === false && exists && !suspended) return "ok";
+  return "unknown";
 }
 
 function buildResult(input: {
@@ -139,19 +124,35 @@ function buildResult(input: {
   followingCount: number;
   tweetCount: number;
   joined: string | null;
-  searchBan: boolean;
-  suggestionBan: boolean;
-  ghostBan: boolean;
-  deboost: boolean;
+  searchBan: boolean | null;
+  suggestionBan: boolean | null;
+  ghostBan: boolean | null;
+  deboost: boolean | null;
   source: CheckResult["source"];
   method: CheckItem["method"];
   signals: ProfileSignal[];
 }): CheckResult {
-  const { score, status } = scoreAndStatus(input);
-  const estimatedNote =
-    input.method === "estimated"
-      ? "公開プロフィールから推定。Xの検索画面で最終確認してください。"
-      : "";
+  const searchStatus = flagStatus(input.searchBan, input.exists, input.isSuspended);
+  const suggestionStatus = flagStatus(input.suggestionBan, input.exists, input.isSuspended);
+  const ghostStatus = flagStatus(input.ghostBan, input.exists, input.isSuspended);
+  const deboostStatus: CheckItemStatus =
+    input.deboost === true
+      ? "deboosted"
+      : input.deboost === false && input.exists && !input.isSuspended
+        ? "ok"
+        : "unknown";
+  const { score, status } = summarizeChecks({
+    exists: input.exists,
+    isSuspended: input.isSuspended,
+    search: searchStatus,
+    suggestion: suggestionStatus,
+    ghost: ghostStatus,
+    deboost: deboostStatus,
+  });
+  const searchUnknown =
+    input.tweetCount > 0
+      ? `ポストは${input.tweetCount.toLocaleString()}件あります。自分のログインではBANでも自分のポストが見えます。フォローしていない別アカウントで最新タブ from:${input.username} を開き、結果がゼロなら検索BANです。`
+      : "ポストが確認できないため、検索面は未確定です。";
 
   return {
     username: input.username,
@@ -192,52 +193,44 @@ function buildResult(input: {
         input.source === "fxtwitter" ? "observed" : input.method,
       ),
       searchBan: item(
-        input.searchBan ? "ban" : input.exists && !input.isSuspended ? "ok" : "unknown",
+        searchStatus,
         "検索BAN (Search Ban)",
-        input.searchBan
+        searchStatus === "ban"
           ? "検索結果（話題・最新）にポストが出ない状態です。"
-          : input.exists && !input.isSuspended
-            ? `正常の兆候です。${estimatedNote}`
-            : "アカウント状態のため検索面を判定できません。",
-        input.method,
+          : searchStatus === "ok"
+            ? "別アカウントの最新タブにポストが出ています。"
+            : searchUnknown,
+        searchStatus === "unknown" ? "estimated" : input.method,
       ),
       searchSuggestionBan: item(
-        input.suggestionBan
-          ? "ban"
-          : input.exists && !input.isSuspended
-            ? "ok"
-            : "unknown",
+        suggestionStatus,
         "検索補完BAN (Suggestion Ban)",
-        input.suggestionBan
+        suggestionStatus === "ban"
           ? "検索窓のサジェスト候補に表示されません。"
-          : input.exists && !input.isSuspended
-            ? `正常の兆候です。${estimatedNote}`
-            : "サジェスト面を判定できません。",
-        input.method,
+          : suggestionStatus === "ok"
+            ? "検索候補にアカウントが出ます。"
+            : "サジェストは別アカウントの検索窓で確認してください。途中までIDを入れて候補に出なければ補完BANです。",
+        suggestionStatus === "unknown" ? "estimated" : input.method,
       ),
       ghostBan: item(
-        input.ghostBan ? "ban" : input.exists && !input.isSuspended ? "ok" : "unknown",
+        ghostStatus,
         "ゴーストBAN (Ghost / Thread Ban)",
-        input.ghostBan
+        ghostStatus === "ban"
           ? "リプライが第三者から完全に非表示になっている状態です。"
-          : input.exists && !input.isSuspended
-            ? "公開アカウントのためゴーストBANの強い兆候はありません。第三者視点の確認を推奨します。"
-            : "リプライ公開を判定できません。",
-        input.method,
+          : ghostStatus === "ok"
+            ? "リプライは第三者にも見えています。"
+            : "ゴーストBANは、フォローしていない第三者にリプライが見えるかで判定します。自動では確定できません。",
+        ghostStatus === "unknown" ? "estimated" : input.method,
       ),
       replyDeboosting: item(
-        input.deboost
-          ? "deboosted"
-          : input.exists && !input.isSuspended
-            ? "ok"
-            : "unknown",
+        deboostStatus,
         "リプライ降格 (Reply Deboosting)",
-        input.deboost
+        deboostStatus === "deboosted"
           ? "リプライが「さらに表示」や不適切折りたたみへ押し込まれています。"
-          : input.exists && !input.isSuspended
-            ? "降格の強い兆候はありません。スレッド下部に埋まっていないかXで確認してください。"
-            : "リプライ順位を判定できません。",
-        input.method,
+          : deboostStatus === "ok"
+            ? "リプライ降格の強い兆候はありません。"
+            : "リプライが「さらに表示」の中に埋まっていないかは、相手の投稿を別アカウントで開いて確認してください。",
+        deboostStatus === "unknown" ? "estimated" : input.method,
       ),
     },
   };
@@ -413,10 +406,10 @@ export async function performXCheck(raw: string): Promise<CheckResult> {
     followingCount: user.following ?? 0,
     tweetCount: user.tweets ?? 0,
     joined: user.joined ?? null,
-    searchBan: false,
-    suggestionBan: false,
-    ghostBan: false,
-    deboost: false,
+    searchBan: null,
+    suggestionBan: null,
+    ghostBan: null,
+    deboost: null,
     source: "fxtwitter",
     method: "estimated",
     signals: collectSignals(user),
