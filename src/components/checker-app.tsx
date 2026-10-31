@@ -4,6 +4,7 @@ import { Toaster, toast } from "sonner";
 import { BanStatusCards } from "@/components/ban-status-cards";
 import { Footer } from "@/components/footer";
 import { GrokDiagnosis } from "@/components/grok-diagnosis";
+import { HoodImport } from "@/components/hood-import";
 import { Header } from "@/components/header";
 import { HistoryDrawer } from "@/components/history-drawer";
 import { KnowledgeSection } from "@/components/knowledge-section";
@@ -134,6 +135,11 @@ function CheckerInner() {
     toast.success(banned ? "検索BANとして記録しました" : "検索OKとして記録しました");
   };
 
+  const handleHood = (next: CheckResult) => {
+    setResult(next);
+    remember(toHistoryItem(next));
+  };
+
   const clearHistory = () => {
     setHistory([]);
     localStorage.removeItem(HISTORY_KEY);
@@ -183,6 +189,7 @@ function CheckerInner() {
         {result ? (
           <div id="results" className="mt-8 space-y-6 animate-fade-up">
             <ProfileCard result={result} />
+            <HoodImport result={result} onApply={handleHood} />
             <BanStatusCards result={result} onSearchVerdict={handleSearchVerdict} />
             <GrokDiagnosis key={result.checkedAt} result={result} />
           </div>

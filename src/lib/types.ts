@@ -49,6 +49,26 @@ export interface CheckResult {
   overallStatus: OverallStatus;
   checkedAt: string;
   source: "fxtwitter" | "fixture" | "limited";
+  /** 本人が読み込んだ Under the Hood JSON。他人のアカウントには紐づかない。 */
+  hood?: HoodReport;
+}
+
+export interface HoodLabel {
+  scope: "post" | "account";
+  code: string;
+  about: string;
+  effect: string;
+  stat: string;
+  postIds: string[];
+  morePosts: number;
+}
+
+export interface HoodReport {
+  startDate: string;
+  endDate: string;
+  generatedAt: string;
+  postCount: number;
+  labels: HoodLabel[];
 }
 
 export interface AIDiagnosis {

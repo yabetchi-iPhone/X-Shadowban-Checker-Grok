@@ -83,6 +83,11 @@ export const diagnoseAccount = createServerFn({ method: "POST" })
 【ゴーストBAN】${r.checks.ghostBan.status} (${r.checks.ghostBan.method})
 【リプライ降格】${r.checks.replyDeboosting.status} (${r.checks.replyDeboosting.method})
 ※ status が unknown の項目は未測定です。ok と書かないでください。from:検索が空なら検索BANです。自分のログイン画面の検索は信用しないでください。
+【Under the Hood】${
+      r.hood
+        ? `${r.hood.startDate}〜${r.hood.endDate} / ラベル ${r.hood.labels.map((label) => label.code).join(",") || "なし"}。本人の先月レポートであり、検索BANの判定には使わない。`
+        : "未読込"
+    }
 【シグナル】${r.signals.map((s) => `${s.label}: ${s.detail}`).join(" / ") || "なし"}
 ${data.userContext ? `【ユーザー補足】${data.userContext}` : ""}
 
